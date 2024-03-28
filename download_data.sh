@@ -1,0 +1,28 @@
+# ! / bin / bash -i
+
+# Define an array of accession numbers from downloaded metadata file from SRA
+ACCESSIONS=(
+SRR21190736 SRR21190737 SRR21190738 SRR21190739 SRR21190740
+SRR21190741 SRR21190742 SRR21190743 SRR21190744 SRR21190745
+SRR21190746 SRR21190747 SRR21190748 SRR21190749 SRR21190750
+SRR21190751 SRR21190752 SRR21190753 SRR21190754 SRR21190755
+SRR21190756 SRR21190757 SRR21190758 SRR21190759 SRR21190760
+SRR21190761 SRR21190762 SRR21190763 SRR21190764 SRR21190765
+SRR21190766 SRR21190767 SRR21190768 SRR21190769 SRR21190770
+SRR21190771 SRR21190772 SRR21190773 SRR21190774 SRR21190775
+)
+
+# Create a directory named "fastq" and move into it
+mkdir -p fastq
+cd fastq
+
+# Loop through the accession numbers and download each one
+for ACCESSION in "${ACCESSIONS[@]}"; do
+    echo "Downloading $ACCESSION..."
+    fasterq-dump "$ACCESSION" --split-files --skip-technical --threads 4
+done
+
+echo "Download completed."
+
+# Move back to the original directory
+cd ..

@@ -1,0 +1,15 @@
+name: rna_seq_analysis
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - sra-tools=3.1.0
+  - fastqc=0.12.1
+  - multiqc=1.21
+  - cutadapt=4.7
+  - bbmap=39.06
+  - star=2.7.11b
+  - samtools=1.19.2
+  - subread=2.0.6
+  - wget=1.21.4
