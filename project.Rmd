@@ -171,6 +171,8 @@ multiqc "$OUTPUT_DIR" -o multiqc
 
 # 3. Trimming data
 
+According to the protocol, the next step in the analysis is trimming the adapters.
+
 The sequencing was performed using BGIseq (DNBseq) technology and libraries were constructed following BGI protocols, the adapters you need to trim will likely be specific to BGI's sequencing platforms. I have found out that adapter for forward strand is `AAGTCGGAGGCCAAGCGGTCTTAGGAAGACAA` and for backward is `AAGTCGGATCGTAGCCATGTCGTTCTGTGAGCCAAGGAGTTG`. I am going to test it using the following script.
 adapter_test.sh:
 ```{bash, eval=FALSE}
@@ -543,64 +545,22 @@ echo "All sample alignments have been completed."
 
 --outSAMtype BAM SortedByCoordinate: This tells STAR to output the alignment results in BAM format, sorted by genomic coordinates. 
 
-Checking mapping with samtools flagstat. mapping_quality.sh:
+Checking mapping with MultiQC. mapping_quality.sh:
 ```{bash, eval=FALSE}
 #!/bin/bash
 
-# Define directories
-BAM_DIR="alignments"  # Directory containing BAM files
-TEMP_DIR="flagstat_reports"  # Temporary directory for individual flagstat reports
+# Define the directory containing STAR output files
+STAR_OUTPUT_DIR="alignments"
 
-# Create the temporary directory if it doesn't exist
-mkdir -p "$TEMP_DIR"
+# Define the directory where you want to save the MultiQC report
+REPORT_DIR="$(pwd)/star_multiqc_report"
 
-# Initialize counters
-total_reads=0
-mapped_reads=0
-properly_paired=0
-
-# Loop through each BAM file in the directory
-for BAM_FILE in "$BAM_DIR"/*.bam; do
-    # Generate a temporary flagstat report
-    TEMP_REPORT="${TEMP_DIR}/$(basename "$BAM_FILE").flagstat"
-    samtools flagstat "$BAM_FILE" > "$TEMP_REPORT"
-    
-    # Extract and accumulate statistics
-    while IFS= read -r line; do
-        case "$line" in
-            *in total*)
-                total_reads=$(($total_reads + $(echo "$line" | cut -d ' ' -f 1)))
-                ;;
-            *mapped*)
-                mapped_reads=$(($mapped_reads + $(echo "$line" | cut -d ' ' -f 1)))
-                ;;
-            *properly paired*)
-                properly_paired=$(($properly_paired + $(echo "$line" | cut -d ' ' -f 1)))
-                ;;
-        esac
-    done < "$TEMP_REPORT"
-done
-
-# Calculate percentages
-mapped_percent=$(echo "scale=2; $mapped_reads / $total_reads * 100" | bc)
-properly_paired_percent=$(echo "scale=2; $properly_paired / $total_reads * 100" | bc)
-
-# Output combined statistics
-echo "Combined statistics for all BAM files:"
-echo "Total reads: $total_reads"
-echo "Mapped reads: $mapped_reads ($mapped_percent%)"
-echo "Properly paired reads: $properly_paired ($properly_paired_percent%)"
-
-# Cleanup: Remove temporary directory and its contents
-rm -r "$TEMP_DIR"
+# Run MultiQC on the STAR outputs
+echo "Running MultiQC on the STAR outputs..."
+multiqc $STAR_OUTPUT_DIR -o $REPORT_DIR
 ```
 Output:
-```{bash, eval=FALSE}
-Combined statistics for all BAM files:
-Total reads: 2538579801
-Mapped reads: 4950244599 (195.00%)
-Properly paired reads: 2411507758 (94.99%)
-```
+<iframe src="star_multiqc_report.pdf" width="100%" height="600"></iframe>
 
 # 6. FeatureCounts
 featurecounts.sh:
@@ -666,45 +626,153 @@ echo "featureCounts has completed."
 
 "$BAM_DIR"/*.bam: Specifies the input BAM files containing the aligned reads.
 
-# 7. Manipulating the count table
-```{r}
-library(ggplot2)
-library(readr) 
-
-data_counts <- read_delim("count_table.txt.summary", 
-                          delim = "\t", 
-                          escape_double = FALSE, 
-                          col_names = TRUE, 
-                          trim_ws = TRUE)
-
-head(data_counts)
-gene_data <- read.table("count_table.txt", header = TRUE, sep = "\t")
-
-# Check the first few rows of the dataframe
-head(gene_data)
-```
+# 7. Gene count summary
+Summary plot is interactive and can be zoomed in/out
 ```{r}
 # Load necessary libraries
 library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(plotly)
 
-# Read the gene count summary file
+# Read the gene count summary and metadata files using base R functions
 gene_count_summary <- read.table("count_table.txt.summary", header = TRUE, stringsAsFactors = FALSE)
+metadata <- read.csv("metadata.txt", stringsAsFactors = FALSE)
 
-# Step 1: Extract column names
-col_names <- colnames(gene_count_summary)
+# Efficient mapping and column name update with vectorized operations
+metadata$genotype <- gsub("- gene corrected", "GC", metadata$genotype)
+srr_to_genotype <- setNames(metadata$genotype, metadata$Run)
 
-# Step 2: Modify column names starting from the second column
-# Using regular expression to extract SRR numbers
-modified_col_names <- sapply(col_names, function(name) {
-  # Extract SRR followed by digits
+# Update column names in gene_count_summary based on SRR numbers, efficiently
+colnames(gene_count_summary)[-1] <- sapply(colnames(gene_count_summary)[-1], function(name) {
   srr_number <- regmatches(name, regexpr("SRR[0-9]+", name))
-  # Return the extracted SRR number if present, else return the original name
-  if(length(srr_number) > 0) return(srr_number) else return(name)
+  if(length(srr_number) > 0 && !is.na(srr_to_genotype[srr_number])) srr_to_genotype[srr_number] else name
 })
 
-# Step 3: Assign the modified names back to the data frame
-colnames(gene_count_summary) <- modified_col_names
+# Reorder the dataframe columns based on sorted names directly
+gene_count_summary <- gene_count_summary[, c("Status", sort(names(gene_count_summary)[-1]))]
 
-print(gene_count_summary)
+# Filter rows before melting to reduce the amount of data processed
+gene_count_summary_filtered <- gene_count_summary %>% 
+  filter(Status %in% c("Assigned", "Unassigned_MultiMapping", "Unassigned_NoFeatures", "Unassigned_Overlapping_Length"))
+
+# Melt the data
+gene_count_long <- melt(gene_count_summary_filtered, id.vars = "Status", variable.name = "Sample", value.name = "Count")
+
+# Create a unique identifier for each replicate
+gene_count_long <- gene_count_long %>%
+  group_by(Sample) %>%
+  mutate(Replicate = paste(Sample, row_number(), sep = "_")) %>%
+  ungroup()
+
+# Plotting
+p <- ggplot(gene_count_long, aes(y = Sample, x = Count, fill = Status)) +
+  geom_bar(stat = "identity", position = "dodge", orientation = "y") +
+  theme_minimal() +
+  labs(title = "Counts for Each Replicate and Status", y = "Replicate", x = "Count") +
+  scale_fill_brewer(palette = "Set3") # Adjust palette as needed
+
+# Convert ggplot object to an interactive plotly object
+ggplotly(p)
+```
+
+# Now lets look at the count table
+```{r}
+# Read the gene count summary and metadata files using base R functions
+count_table <- read.table("count_table.txt", header = TRUE, stringsAsFactors = FALSE)
+
+# Efficient mapping and column name update with vectorized operations
+metadata$genotype <- gsub("- gene corrected", "GC", metadata$genotype)
+srr_to_genotype <- setNames(metadata$genotype, metadata$Run)
+
+# Update column names based on SRR numbers, efficiently
+colnames(count_table)[7:ncol(count_table)] <- sapply(colnames(count_table)[7:ncol(count_table)], function(name) {
+  srr_number <- regmatches(name, regexpr("SRR[0-9]+", name))
+  if(length(srr_number) > 0 && !is.na(srr_to_genotype[srr_number])) {
+    srr_to_genotype[srr_number]
+  } else {
+    name
+  }
+})
+
+
+# Extract the gene identifiers (or names) to use as row names
+gene_ids <- count_table[, 1]
+
+# Extract the count data, excluding the first column and non-count columns
+count_data <- count_table[, 7:ncol(count_table)] # Adjust indices as necessary
+
+# Convert to matrix if it's not already one
+count_data_matrix <- as.matrix(count_data)
+
+# Assign gene identifiers as row names to the matrix
+rownames(count_data_matrix) = gene_ids
+
+count_data_matrix <- count_data_matrix[, order(colnames(count_data_matrix))]
+print(count_data_matrix[1:4, ])
+```
+We should normalize the counts
+```{r}
+library(DESeq2)
+
+# Create a DataFrame for the sample conditions
+sample_conditions <- factor(c(rep("A79V_fAD", 10), rep("Control", 10), rep("L150P_fAD", 10), rep("Control", 10)))
+
+# Reorder the factor levels to make "Control" the reference level
+sample_conditions <- factor(sample_conditions, levels = c("Control", "A79V_fAD", "L150P_fAD"))
+
+# Now recreate your colData DataFrame with the updated sample_conditions
+colData <- DataFrame(condition = sample_conditions)
+rownames(colData) <- colnames(count_data_matrix)
+
+# Recreate DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = count_data_matrix,
+                              colData = colData,
+                              design = ~ condition)
+
+
+colData <- DataFrame(condition = sample_conditions)
+rownames(colData) <- colnames(count_data_matrix)
+
+# Create DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = count_data_matrix,
+                              colData = colData,
+                              design = ~ condition)
+
+# Estimate size factors
+dds <- estimateSizeFactors(dds)
+
+# Access normalized counts
+normalized_counts <- counts(dds, normalized=TRUE)
+```
+Running DESeq2
+```{r}
+dds <- DESeq(dds)
+res_A79V_vs_Control <- results(dds, contrast=c("condition", "A79V_fAD", "Control"))
+res_L150P_vs_Control <- results(dds, contrast=c("condition", "L150P_fAD", "Control"))
+
+
+```
+
+MA plots:
+```{r}
+plotMA(res_A79V_vs_Control, main="MA plot: A79V_fAD vs Control", ylim=c(-2,2))
+plotMA(res_L150P_vs_Control, main = "MA plot: L150P_fAD vs Control", ylim=c(-2,2))
+```
+PCA plots:
+```{r}
+# Run PCA on the normalized counts
+rld <- rlogTransformation(dds)  # rlog transformation is often used prior to PCA
+pca_data <- plotPCA(rld, intgroup=c("condition"), returnData=TRUE)
+percentVar <- round(100 * attr(pca_data, "percentVar"))
+
+# Make the PCA plot
+ggplot(pca_data, aes(PC1, PC2, color=condition)) +
+  geom_point(size=3) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+  ggtitle("PCA plot of conditions") +
+  theme_bw()
+
 ```
 
