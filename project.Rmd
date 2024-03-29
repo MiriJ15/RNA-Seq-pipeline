@@ -166,7 +166,7 @@ fastqc -o "$OUTPUT_DIR" -t 40 "$FASTQ_DIR"/*.fastq
 multiqc "$OUTPUT_DIR" -o multiqc
 ```
 
-<iframe src="multiqc_preprocessed.pdf" width="100%" height="600"></iframe>
+<iframe src="multiqc_reports/multiqc_preprocessed.pdf" width="100%" height="600"></iframe>
 
 
 # 3. Trimming data
@@ -447,7 +447,7 @@ fastqc -o "$OUTPUT_DIR" -t 40 "$FASTQ_DIR"/*.fastq
 # Run MultiQC to aggregate the FastQC reports
 multiqc "$OUTPUT_DIR" -o processed_multiqc
 ```
-<iframe src="multiqc_postprocessed.pdf" width="100%" height="600"></iframe>
+<iframe src="multiqc_reports/multiqc_postprocessed.pdf" width="100%" height="600"></iframe>
 
 # 5. Alignment with star
 First, we should download hg38 assembly (used in the paper).
@@ -560,7 +560,7 @@ echo "Running MultiQC on the STAR outputs..."
 multiqc $STAR_OUTPUT_DIR -o $REPORT_DIR
 ```
 Output:
-<iframe src="star_multiqc_report.pdf" width="100%" height="600"></iframe>
+<iframe src="multiqc_reports/star_multiqc_report.pdf" width="100%" height="600"></iframe>
 
 # 6. FeatureCounts
 featurecounts.sh:
@@ -711,7 +711,7 @@ rownames(count_data_matrix) = gene_ids
 count_data_matrix <- count_data_matrix[, order(colnames(count_data_matrix))]
 print(count_data_matrix[1:4, ])
 ```
-We should normalize the counts
+
 ```{r}
 library(DESeq2)
 
@@ -721,16 +721,7 @@ sample_conditions <- factor(c(rep("A79V_fAD", 10), rep("Control", 10), rep("L150
 # Reorder the factor levels to make "Control" the reference level
 sample_conditions <- factor(sample_conditions, levels = c("Control", "A79V_fAD", "L150P_fAD"))
 
-# Now recreate your colData DataFrame with the updated sample_conditions
-colData <- DataFrame(condition = sample_conditions)
-rownames(colData) <- colnames(count_data_matrix)
-
-# Recreate DESeqDataSet
-dds <- DESeqDataSetFromMatrix(countData = count_data_matrix,
-                              colData = colData,
-                              design = ~ condition)
-
-
+# Now create your colData DataFrame with the updated sample_conditions
 colData <- DataFrame(condition = sample_conditions)
 rownames(colData) <- colnames(count_data_matrix)
 
@@ -739,40 +730,36 @@ dds <- DESeqDataSetFromMatrix(countData = count_data_matrix,
                               colData = colData,
                               design = ~ condition)
 
-# Estimate size factors
-dds <- estimateSizeFactors(dds)
-
-# Access normalized counts
-normalized_counts <- counts(dds, normalized=TRUE)
 ```
 Running DESeq2
 ```{r}
-dds <- DESeq(dds)
-res_A79V_vs_Control <- results(dds, contrast=c("condition", "A79V_fAD", "Control"))
-res_L150P_vs_Control <- results(dds, contrast=c("condition", "L150P_fAD", "Control"))
+dds<- DESeq(dds)
+```
+```{r}
+res_A79V_vs_Control<- results(dds, name="condition_A79V_fAD_vs_Control")
 
-
+res_L150P_vs_Control<- results(dds, name="condition_L150P_fAD_vs_Control")
 ```
 
 MA plots:
 ```{r}
-plotMA(res_A79V_vs_Control, main="MA plot: A79V_fAD vs Control", ylim=c(-2,2))
-plotMA(res_L150P_vs_Control, main = "MA plot: L150P_fAD vs Control", ylim=c(-2,2))
+plotMA(res_A79V_vs_Control, main="A79V vs Control", ylim=c(-2,2))
+
+plotMA(res_L150P_vs_Control, main="L150P vs Control", ylim=c(-2,2))
+
 ```
-PCA plots:
+
+PCA plot:
 ```{r}
-# Run PCA on the normalized counts
-rld <- rlogTransformation(dds)  # rlog transformation is often used prior to PCA
-pca_data <- plotPCA(rld, intgroup=c("condition"), returnData=TRUE)
-percentVar <- round(100 * attr(pca_data, "percentVar"))
+vst_data <- vst(dds, blind = FALSE)
+plotPCA(vst_data, intgroup=c("condition"))
+```
+Number of Differentially expressed genes:
+```{r}
+res<- results(dds)
 
-# Make the PCA plot
-ggplot(pca_data, aes(PC1, PC2, color=condition)) +
-  geom_point(size=3) +
-  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
-  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
-  ggtitle("PCA plot of conditions") +
-  theme_bw()
+significant_genes <- res[which(res$padj <0.05), ]
 
+significant_fold_change_genes<- significant_genes[which(abs(significant_genes$log2FoldChange)>1),]
 ```
 
