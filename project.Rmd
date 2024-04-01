@@ -634,16 +634,18 @@ library(dplyr)
 library(ggplot2)
 library(reshape2)
 library(plotly)
+library(stringr)
 
-# Read the gene count summary and metadata files using base R functions
+
+# Read the gene count summary and metadata files
 gene_count_summary <- read.table("count_table.txt.summary", header = TRUE, stringsAsFactors = FALSE)
 metadata <- read.csv("metadata.txt", stringsAsFactors = FALSE)
 
-# Efficient mapping and column name update with vectorized operations
+# Mapping and column name update with vectorized operations
 metadata$genotype <- gsub("- gene corrected", "GC", metadata$genotype)
 srr_to_genotype <- setNames(metadata$genotype, metadata$Run)
 
-# Update column names in gene_count_summary based on SRR numbers, efficiently
+# Update column names in gene_count_summary based on SRR numbers
 colnames(gene_count_summary)[-1] <- sapply(colnames(gene_count_summary)[-1], function(name) {
   srr_number <- regmatches(name, regexpr("SRR[0-9]+", name))
   if(length(srr_number) > 0 && !is.na(srr_to_genotype[srr_number])) srr_to_genotype[srr_number] else name
@@ -665,8 +667,12 @@ gene_count_long <- gene_count_long %>%
   mutate(Replicate = paste(Sample, row_number(), sep = "_")) %>%
   ungroup()
 
+# As I will be looking only at L150P, I will get rid of A79V samples
+filtered_gene_count_long <- gene_count_long %>%
+  filter(!str_detect(Sample, "A79V"))
+
 # Plotting
-p <- ggplot(gene_count_long, aes(y = Sample, x = Count, fill = Status)) +
+p <- ggplot(filtered_gene_count_long, aes(y = Sample, x = Count, fill = Status)) +
   geom_bar(stat = "identity", position = "dodge", orientation = "y") +
   theme_minimal() +
   labs(title = "Counts for Each Replicate and Status", y = "Replicate", x = "Count") +
@@ -678,14 +684,14 @@ ggplotly(p)
 
 # Now lets look at the count table
 ```{r}
-# Read the gene count summary and metadata files using base R functions
+# Read the gene count summary and metadata files
 count_table <- read.table("count_table.txt", header = TRUE, stringsAsFactors = FALSE)
 
-# Efficient mapping and column name update with vectorized operations
+# mapping and column name update with vectorized operations
 metadata$genotype <- gsub("- gene corrected", "GC", metadata$genotype)
 srr_to_genotype <- setNames(metadata$genotype, metadata$Run)
 
-# Update column names based on SRR numbers, efficiently
+# Update column names based on SRR numbers
 colnames(count_table)[7:ncol(count_table)] <- sapply(colnames(count_table)[7:ncol(count_table)], function(name) {
   srr_number <- regmatches(name, regexpr("SRR[0-9]+", name))
   if(length(srr_number) > 0 && !is.na(srr_to_genotype[srr_number])) {
@@ -709,50 +715,45 @@ count_data_matrix <- as.matrix(count_data)
 rownames(count_data_matrix) = gene_ids
 
 count_data_matrix <- count_data_matrix[, order(colnames(count_data_matrix))]
-print(count_data_matrix[1:4, ])
+
+# As I will be looking only at L150P, I will get rid of A79V samples
+filtered_count_data_matrix <- count_data_matrix[, -c(1:20)]
+
 ```
 
 ```{r}
 library(DESeq2)
 
-# Create a DataFrame for the sample conditions
-sample_conditions <- factor(c(rep("A79V_fAD", 10), rep("Control", 10), rep("L150P_fAD", 10), rep("Control", 10)))
+colData <- data.frame(
+  condition = factor(c("L150P", "L150P", "L150P","L150P","L150P", "L150P", "L150P", "L150P","L150P","L150P", "Control", "Control","Control","Control","Control" , "Control", "Control","Control","Control","Control" ))
+)
+rownames(colData) = colnames(filtered_count_data_matrix)
+```
+Running DESeq2 on L150P and Control samples
+```{r}
+dds<- DESeqDataSetFromMatrix(
+  countData = filtered_count_data_matrix,
+  colData = colData,
+  design = ~ condition
+)
 
-# Reorder the factor levels to make "Control" the reference level
-sample_conditions <- factor(sample_conditions, levels = c("Control", "A79V_fAD", "L150P_fAD"))
+dds <- DESeq(dds)
 
-# Now create your colData DataFrame with the updated sample_conditions
-colData <- DataFrame(condition = sample_conditions)
-rownames(colData) <- colnames(count_data_matrix)
+results <- results(dds)
 
-# Create DESeqDataSet
-dds <- DESeqDataSetFromMatrix(countData = count_data_matrix,
-                              colData = colData,
-                              design = ~ condition)
+resultsOrdered <- results[order(results$pvalue),]
 
 ```
-Running DESeq2
+MA Plot
 ```{r}
-dds<- DESeq(dds)
-```
-```{r}
-res_A79V_vs_Control<- results(dds, name="condition_A79V_fAD_vs_Control")
-
-res_L150P_vs_Control<- results(dds, name="condition_L150P_fAD_vs_Control")
-```
-
-MA plots:
-```{r}
-plotMA(res_A79V_vs_Control, main="A79V vs Control", ylim=c(-2,2))
-
-plotMA(res_L150P_vs_Control, main="L150P vs Control", ylim=c(-2,2))
-
+plotMA(results, main="MA-plot", ylim=c(-2,2))
 ```
 
 PCA plot:
 ```{r}
-vst_data <- vst(dds, blind = FALSE)
-plotPCA(vst_data, intgroup=c("condition"))
+rld <- rlogTransformation(dds)
+plotPCA(rld, intgroup="condition")
+
 ```
 Number of Differentially expressed genes:
 ```{r}
@@ -763,3 +764,119 @@ significant_genes <- res[which(res$padj <0.05), ]
 significant_fold_change_genes<- significant_genes[which(abs(significant_genes$log2FoldChange)>1),]
 ```
 
+Summary of the results:
+```{r}
+cat("Number of significant genes: ", nrow(significant_genes), "\n")
+cat("Number of significant genes with |log2FoldChange| > 1: ", nrow(significant_fold_change_genes), "\n")
+
+# Viewing the top significant genes
+head(significant_fold_change_genes)
+
+```
+
+Volcano plot:
+```{r}
+plot(significant_genes$log2FoldChange, -log10(significant_genes$pvalue),
+     pch=20, main="Volcano Plot", xlab="Log2 Fold Change", ylab="-Log10 p-value")
+points(significant_fold_change_genes$log2FoldChange, -log10(significant_fold_change_genes$pvalue),
+       col="red", pch=20)
+
+```
+
+Heatmap:
+```{r}
+library(pheatmap)
+
+selected_genes <- rownames(significant_fold_change_genes)
+rlog_counts <- assay(rlogTransformation(dds))
+pheatmap(rlog_counts[selected_genes, ], cluster_rows=TRUE, show_rownames=FALSE,
+         cluster_cols=TRUE, annotation_col=as.data.frame(colData))
+
+```
+GO Enrichment analysis:
+
+Preparation for actual analysis:
+```{r}
+library(clusterProfiler)
+library(AnnotationDbi)
+library(ensembldb)
+library(EnsDb.Hsapiens.v86)  
+library(org.Hs.eg.db)
+library(DT)
+
+
+gene_list <- rownames(significant_fold_change_genes)
+
+gene_list <- sapply(gene_list, function(x) {
+  if(grepl("^ENSG", x)) { # Check if the gene ID starts with "ENSG"
+    sub("\\..*$", "", x)  # Remove dot and everything after
+  } else {
+    x 
+  }
+}, USE.NAMES = FALSE) 
+
+entrez_ids <- mapIds(EnsDb.Hsapiens.v86,
+                     keys = gene_list,
+                     column = "ENTREZID",
+                     keytype = "GENEID",
+                     multiVals = "first")
+
+# Filter out NA values
+entrez_ids <- na.omit(entrez_ids)
+
+
+```
+Biological Processes:
+```{r}
+ego <- enrichGO(gene         = entrez_ids,
+                OrgDb         = org.Hs.eg.db,
+                keyType      = "ENTREZID",
+                ont          = "BP",
+                pAdjustMethod = "BH",
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+
+ego_df <- as.data.frame(ego)
+
+datatable(head(ego_df), options = list(pageLength = 5), 
+          caption = 'Top GO Terms from Enrichment Analysis (BP)')
+
+dotplot(ego)
+```
+
+Cellular component:
+```{r}
+ego <- enrichGO(gene         = entrez_ids,
+                OrgDb         = org.Hs.eg.db,
+                keyType      = "ENTREZID",
+                ont          = "CC",
+                pAdjustMethod = "BH",
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+
+ego_df <- as.data.frame(ego)
+
+datatable(head(ego_df), options = list(pageLength = 5), 
+          caption = 'Top GO Terms from Enrichment Analysis (CC)')
+
+dotplot(ego)
+```
+
+
+Molecular function:
+```{r}
+ego <- enrichGO(gene         = entrez_ids,
+                OrgDb         = org.Hs.eg.db,
+                keyType      = "ENTREZID",
+                ont          = "MF",
+                pAdjustMethod = "BH",
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+
+ego_df <- as.data.frame(ego)
+
+datatable(head(ego_df), options = list(pageLength = 5), 
+          caption = 'Top GO Terms from Enrichment Analysis (MF)')
+
+dotplot(ego)
+```
