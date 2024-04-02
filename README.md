@@ -23,7 +23,7 @@ This project investigates the transcriptomic changes in neurons carrying PSEN1 m
 - Differential expression analysis focuses on comparing control samples against PSEN1 mutant samples, specifically analyzing the L150P mutation.
 
 ## Scripts and Analysis Pipeline
-- Detailed scripts (found in `scripts` directory) for each analysis step are included, covering data downloading (`download_data.sh`), quality control (`fastqc.sh`, `multiqc.sh`), read alignment (`star.sh`), and differential expression analysis (found in `project.Rmd`/`project.html`.
+- Detailed scripts (found in `scripts` directory) for each analysis step are included, covering data downloading (`download_data.sh`), quality control (`fastqc.sh`, `multiqc.sh`), read alignment (`star.sh`), and differential expression analysis (found in `project.Rmd`/`project.html`).
 - A master script (`master.sh`) is provided to run all scripts sequentially for improved reproducibility.
 
 ## Results
