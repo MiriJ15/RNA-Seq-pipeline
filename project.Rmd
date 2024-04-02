@@ -627,6 +627,8 @@ echo "featureCounts has completed."
 "$BAM_DIR"/*.bam: Specifies the input BAM files containing the aligned reads.
 
 # 7. Gene count summary
+Important information:I will be looking only at L150P, I will get rid of A79V samples and leave only 10 L150P samples, 5 control and 5 with familial AD. At one point I have realized that 10 samples are low-quality
+
 Summary plot is interactive and can be zoomed in/out
 ```{r}
 # Load necessary libraries
@@ -635,7 +637,8 @@ library(ggplot2)
 library(reshape2)
 library(plotly)
 library(stringr)
-
+library(DESeq2)
+library(ggrepel)
 
 # Read the gene count summary and metadata files
 gene_count_summary <- read.table("count_table.txt.summary", header = TRUE, stringsAsFactors = FALSE)
@@ -656,7 +659,7 @@ gene_count_summary <- gene_count_summary[, c("Status", sort(names(gene_count_sum
 
 # Filter rows before melting to reduce the amount of data processed
 gene_count_summary_filtered <- gene_count_summary %>% 
-  filter(Status %in% c("Assigned", "Unassigned_MultiMapping", "Unassigned_NoFeatures", "Unassigned_Overlapping_Length"))
+   dplyr::filter(Status %in% c("Assigned", "Unassigned_MultiMapping", "Unassigned_NoFeatures", "Unassigned_Overlapping_Length"))
 
 # Melt the data
 gene_count_long <- melt(gene_count_summary_filtered, id.vars = "Status", variable.name = "Sample", value.name = "Count")
@@ -667,9 +670,11 @@ gene_count_long <- gene_count_long %>%
   mutate(Replicate = paste(Sample, row_number(), sep = "_")) %>%
   ungroup()
 
-# As I will be looking only at L150P, I will get rid of A79V samples
+# As I will be looking only at L150P, I will get rid of A79V samples and leave only 5 L150P samples (At one point I have realized that first 5 samples are low-quality)
 filtered_gene_count_long <- gene_count_long %>%
-  filter(!str_detect(Sample, "A79V"))
+  dplyr::filter(!str_detect(Sample, "A79V")) %>%
+  dplyr::slice(-c(1:20)) %>%
+  dplyr::slice(-c(21:44)) 
 
 # Plotting
 p <- ggplot(filtered_gene_count_long, aes(y = Sample, x = Count, fill = Status)) +
@@ -681,8 +686,9 @@ p <- ggplot(filtered_gene_count_long, aes(y = Sample, x = Count, fill = Status))
 # Convert ggplot object to an interactive plotly object
 ggplotly(p)
 ```
+The majority of counts for each replicate fall under the 'Assigned' category, indicating successful mapping to known genomic features, while the other categories represent various types of reads that could not be uniquely or properly assigned. This distribution suggests a consistent pattern of read assignment across the replicates, with a relatively small fraction of reads being unassigned or ambiguously mapped.
 
-# Now lets look at the count table
+# Now lets process the count table
 ```{r}
 # Read the gene count summary and metadata files
 count_table <- read.table("count_table.txt", header = TRUE, stringsAsFactors = FALSE)
@@ -716,19 +722,19 @@ rownames(count_data_matrix) = gene_ids
 
 count_data_matrix <- count_data_matrix[, order(colnames(count_data_matrix))]
 
-# As I will be looking only at L150P, I will get rid of A79V samples
+# As I will be looking only at L150P, I will get rid of A79V samples and first 5 L150P samples
 filtered_count_data_matrix <- count_data_matrix[, -c(1:20)]
-
+filtered_count_data_matrix <- filtered_count_data_matrix[, -c(1:5)]
+filtered_count_data_matrix <- filtered_count_data_matrix[, -c(6:10)]
 ```
 
 ```{r}
-library(DESeq2)
-
 colData <- data.frame(
-  condition = factor(c("L150P", "L150P", "L150P","L150P","L150P", "L150P", "L150P", "L150P","L150P","L150P", "Control", "Control","Control","Control","Control" , "Control", "Control","Control","Control","Control" ))
+  condition = factor(c("L150P", "L150P", "L150P","L150P","L150P", "Control", "Control","Control","Control","Control" ))
 )
 rownames(colData) = colnames(filtered_count_data_matrix)
 ```
+
 Running DESeq2 on L150P and Control samples
 ```{r}
 dds<- DESeqDataSetFromMatrix(
@@ -748,13 +754,29 @@ MA Plot
 ```{r}
 plotMA(results, main="MA-plot", ylim=c(-2,2))
 ```
+The blue points represent genes that are significantly differentially expressed, with their dispersion reflecting the strength and direction of differential expression. The majority of genes do not exhibit significant changes in expression (grey points), indicating stable expression across the conditions compared. The clustering of blue points away from the zero log fold change line, especially for genes with higher mean expression levels, suggests a set of genes with notable expression differences that may be biologically significant in the context of the L150P variant.
 
 PCA plot:
 ```{r}
 rld <- rlogTransformation(dds)
 plotPCA(rld, intgroup="condition")
 
+pcaData <- plotPCA(rld, intgroup="condition", returnData=TRUE)
+pcaData$sample <- rownames(pcaData)
+
+ggplot(pcaData, aes(x=PC1, y=PC2, label=sample)) +
+  geom_point(aes(color=condition), size=2) +
+  geom_text_repel(aes(color=condition), size=3) +
+  theme_minimal() +
+  ggtitle("PCA of rlog-transformed counts with Sample Labels") +
+  xlab(paste0("PC1 (", round(100 * attr(pcaData, "percentVar")[1]), "% variance)")) +
+  ylab(paste0("PC2 (", round(100 * attr(pcaData, "percentVar")[2]), "% variance)")) +
+  scale_color_manual(values=c("Condition1"="blue", "Condition2"="red"))
+
 ```
+
+The PCA plot illustrates the separation between the control group and the L150P variant samples, with principal component 1 (PC1) accounting for 98% of the variance. The distinct clustering of the L150P samples away from the control on PC1 suggests a significant impact of the L150P mutation on the overall gene expression profile. The variance captured by PC2 is relatively small, indicating that most of the expression variation is explained by PC1. This separation supports the potential of the L150P mutation to drive distinct transcriptional changes.
+
 Number of Differentially expressed genes:
 ```{r}
 res<- results(dds)
@@ -782,6 +804,7 @@ points(significant_fold_change_genes$log2FoldChange, -log10(significant_fold_cha
        col="red", pch=20)
 
 ```
+The density of points in the significant regions suggests a substantial number of genes are differentially expressed.
 
 Heatmap:
 ```{r}
