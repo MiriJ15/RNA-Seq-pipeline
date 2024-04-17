@@ -19,14 +19,11 @@ featureCounts -a "$ANNOTATION_FILE" \
               -F GTF \
               -t exon \
               -g gene_id \
-              -O \
+              -p \
+              --countReadPairs \
               --minOverlap 90 \
               --fracOverlap 0.9 \
-              --primary \
-              -p \
-              -B \
-              -C \
               -T 32 \
               "$BAM_DIR"/*.bam
-
+              
 echo "featureCounts has completed."

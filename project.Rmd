@@ -586,13 +586,10 @@ featureCounts -a "$ANNOTATION_FILE" \
               -F GTF \
               -t exon \
               -g gene_id \
-              -O \
+              -p \
+              --countReadPairs \
               --minOverlap 90 \
               --fracOverlap 0.9 \
-              --primary \
-              -p \
-              -B \
-              -C \
               -T 32 \
               "$BAM_DIR"/*.bam
 
@@ -606,7 +603,7 @@ echo "featureCounts has completed."
 
 -t exon: Specifies the type of feature to count reads against. Here, exon means that reads will be counted if they map to exon regions defined in the annotation file.
 
--g gene_id: This option sets the attribute in the annotation file that will be used to group features (e.g., exons) into meta-features (e.g., genes) for counting.
+-g ref_gene: This option sets the attribute in the annotation file that will be used to group features (e.g., exons) into meta-features (e.g., genes) for counting.
 
 -O: Allows reads to be assigned to more than one feature if they overlap multiple features. This is important for reads that might map to regions where features overlap (e.g., alternative splicing sites).
 
@@ -654,6 +651,24 @@ colnames(gene_count_summary)[-1] <- sapply(colnames(gene_count_summary)[-1], fun
   if(length(srr_number) > 0 && !is.na(srr_to_genotype[srr_number])) srr_to_genotype[srr_number] else name
 })
 
+# Function to rename duplicates with suffixes
+rename_duplicates <- function(names) {
+  # Create a counter for each unique name
+  counts <- rep(0, length(names))
+  names_with_counts <- names
+  for (i in seq_along(names)) {
+    counts[i] <- sum(names[1:i] == names[i])
+    if (counts[i] > 1) {
+      names_with_counts[i] <- paste(names[i], counts[i], sep = "_")
+    }
+  }
+  names_with_counts
+}
+
+# Applying the function to rename columns
+names(gene_count_summary) <- rename_duplicates(names(gene_count_summary))
+
+
 # Reorder the dataframe columns based on sorted names directly
 gene_count_summary <- gene_count_summary[, c("Status", sort(names(gene_count_summary)[-1]))]
 
@@ -670,11 +685,13 @@ gene_count_long <- gene_count_long %>%
   mutate(Replicate = paste(Sample, row_number(), sep = "_")) %>%
   ungroup()
 
-# As I will be looking only at L150P, I will get rid of A79V samples and leave only 5 L150P samples (At one point I have realized that first 5 samples are low-quality)
+# As I will be looking only at L150P, I will get rid of A79V samples and leave only 5 L150P samples
 filtered_gene_count_long <- gene_count_long %>%
   dplyr::filter(!str_detect(Sample, "A79V")) %>%
-  dplyr::slice(-c(1:20)) %>%
-  dplyr::slice(-c(21:44)) 
+  dplyr::slice(-c(1:4)) %>%
+  dplyr::slice(-c(5:20)) %>%
+  dplyr::slice(-c(21:24)) %>%
+  dplyr::slice(-c(25:40))
 
 # Plotting
 p <- ggplot(filtered_gene_count_long, aes(y = Sample, x = Count, fill = Status)) +
@@ -752,7 +769,7 @@ resultsOrdered <- results[order(results$pvalue),]
 ```
 MA Plot
 ```{r}
-plotMA(results, main="MA-plot", ylim=c(-2,2))
+plotMA(results, main="MA-plot", ylim=c(-10,10))
 ```
 The blue points represent genes that are significantly differentially expressed, with their dispersion reflecting the strength and direction of differential expression. The majority of genes do not exhibit significant changes in expression (grey points), indicating stable expression across the conditions compared. The clustering of blue points away from the zero log fold change line, especially for genes with higher mean expression levels, suggests a set of genes with notable expression differences that may be biologically significant in the context of the L150P variant.
 
@@ -793,7 +810,6 @@ cat("Number of significant genes with |log2FoldChange| > 1: ", nrow(significant_
 
 # Viewing the top significant genes
 head(significant_fold_change_genes)
-
 ```
 
 Volcano plot:
@@ -831,29 +847,18 @@ library(DT)
 gene_list <- rownames(significant_fold_change_genes)
 
 gene_list <- sapply(gene_list, function(x) {
-  if(grepl("^ENSG", x)) { # Check if the gene ID starts with "ENSG"
+  if(grepl("^ENSG", x)) {  # Check if the gene ID starts with "ENSG"
     sub("\\..*$", "", x)  # Remove dot and everything after
   } else {
-    x 
+    x
   }
-}, USE.NAMES = FALSE) 
-
-entrez_ids <- mapIds(EnsDb.Hsapiens.v86,
-                     keys = gene_list,
-                     column = "ENTREZID",
-                     keytype = "GENEID",
-                     multiVals = "first")
-
-# Filter out NA values
-entrez_ids <- na.omit(entrez_ids)
-
-
+}, USE.NAMES = FALSE)
 ```
 Biological Processes:
 ```{r}
-ego <- enrichGO(gene         = entrez_ids,
+ego <- enrichGO(gene         = gene_list,
                 OrgDb         = org.Hs.eg.db,
-                keyType      = "ENTREZID",
+                keyType      = "ENSEMBL",
                 ont          = "BP",
                 pAdjustMethod = "BH",
                 qvalueCutoff  = 0.05,
@@ -869,9 +874,9 @@ dotplot(ego)
 
 Cellular component:
 ```{r}
-ego <- enrichGO(gene         = entrez_ids,
+ego <- enrichGO(gene         = gene_list,
                 OrgDb         = org.Hs.eg.db,
-                keyType      = "ENTREZID",
+                keyType      = "ENSEMBL",
                 ont          = "CC",
                 pAdjustMethod = "BH",
                 qvalueCutoff  = 0.05,
@@ -888,9 +893,9 @@ dotplot(ego)
 
 Molecular function:
 ```{r}
-ego <- enrichGO(gene         = entrez_ids,
+ego <- enrichGO(gene         = gene_list,
                 OrgDb         = org.Hs.eg.db,
-                keyType      = "ENTREZID",
+                keyType      = "ENSEMBL",
                 ont          = "MF",
                 pAdjustMethod = "BH",
                 qvalueCutoff  = 0.05,
@@ -903,3 +908,18 @@ datatable(head(ego_df), options = list(pageLength = 5),
 
 dotplot(ego)
 ```
+```{r}
+library(biomaRt)
+
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+
+cage_gene_ids <- c("CATG00000000442.1", "CATG00000000487.1", "CATG00000000490.1")
+
+gene_mapping <- getBM(attributes = c('ensembl_gene_id', 'hgnc_symbol'),
+                      filters = 'ensembl_gene_id',
+                      values = cage_gene_ids,
+                      mart = ensembl)
+
+```
+
+
