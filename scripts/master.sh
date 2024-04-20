@@ -30,6 +30,9 @@ bash star.sh
 # Quality check for mapping
 bash mapping_quality.sh
 
+# Assess rRNA removal via RSeQC
+bash RSeQC.sh
+
 # Step 6: Feature Counts
 bash featurecounts.sh
 

@@ -13,3 +13,4 @@ dependencies:
   - samtools=1.19.2
   - subread=2.0.6
   - wget=1.21.4
+  - rseqc=5.0.3

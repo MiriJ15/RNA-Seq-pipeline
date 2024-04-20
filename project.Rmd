@@ -49,6 +49,7 @@ dependencies:
   - samtools=1.19.2
   - subread=2.0.6
   - wget=1.21.4
+  - rseqc=5.0.3
 ```
 Run the following command to create new environment with specified name:
 ```{bash, eval=FALSE}
@@ -105,6 +106,9 @@ bash star.sh
 
 # Quality check for mapping
 bash mapping_quality.sh
+
+# Assess rRNA removal via RSeQC
+bash RSeQC.sh
 
 # Step 6: Feature Counts
 bash featurecounts.sh
@@ -562,6 +566,45 @@ multiqc $STAR_OUTPUT_DIR -o $REPORT_DIR
 Output:
 <iframe src="multiqc_reports/star_multiqc_report.pdf" width="100%" height="600"></iframe>
 
+We can also assess rRNA removal via RSeQC
+```{bash, eval=FALSE}
+#!/bin/bash
+
+# Define the directory containing BAM files and where to output results
+BAM_DIR="alignments"
+OUTPUT_DIR="rRNA_overlap_results"
+RIBO_BED="rRNA.bed"
+
+# Create output directory if it does not exist
+mkdir -p "$OUTPUT_DIR"
+
+# Loop through each BAM file in the directory
+for BAM_FILE in "$BAM_DIR"/*.bam; do
+    # Extract the base name of the file for output naming
+    BASE_NAME=$(basename "$BAM_FILE" .bam)
+    
+    # Perform bedtools intersect
+    bedtools intersect -abam "$BAM_FILE" -b "$RIBO_BED" -bed -wa | wc -l > "$OUTPUT_DIR/${BASE_NAME}_rRNA_count.txt"
+    
+    echo "Processed $BAM_FILE"
+done
+
+echo "All files processed. rRNA read counts are in $OUTPUT_DIR."
+```
+The following table compares number of residual RNA before and after removal:
+```{bash, eval=FALSE}
+Filename	RNA Before	RNA After
+SRR21190756.Aligned.sortedByCoord.out_rRNA_count.txt	954	156
+SRR21190757.Aligned.sortedByCoord.out_rRNA_count.txt	681	118
+SRR21190758.Aligned.sortedByCoord.out_rRNA_count.txt	930	102
+SRR21190759.Aligned.sortedByCoord.out_rRNA_count.txt	661	63
+SRR21190760.Aligned.sortedByCoord.out_rRNA_count.txt	548	62
+SRR21190761.Aligned.sortedByCoord.out_rRNA_count.txt	172	42
+SRR21190762.Aligned.sortedByCoord.out_rRNA_count.txt	1159	293
+SRR21190763.Aligned.sortedByCoord.out_rRNA_count.txt	1373	208
+SRR21190764.Aligned.sortedByCoord.out_rRNA_count.txt	1017	260
+SRR21190765.Aligned.sortedByCoord.out_rRNA_count.txt	1251	258
+```
 # 6. FeatureCounts
 featurecounts.sh:
 ```{bash, eval=FALSE}
@@ -580,20 +623,23 @@ mkdir -p "$OUTPUT_DIR"
 # Output file name
 OUTPUT_FILE="${OUTPUT_DIR}/featureCounts_results.txt"
 
-# Run featureCounts
+# Run featureCounts with the specified options
 featureCounts -a "$ANNOTATION_FILE" \
               -o "$OUTPUT_FILE" \
               -F GTF \
-              -t exon \
-              -g gene_id \
+              -s 2 \
               -p \
               --countReadPairs \
+              -C \
+              -B \
+              --extraAttributes gene_name \
               --minOverlap 90 \
               --fracOverlap 0.9 \
-              -T 32 \
+              -T 16 \
               "$BAM_DIR"/*.bam
 
 echo "featureCounts has completed."
+
 ```
 -a "$ANNOTATION_FILE": Specifies the annotation file.
 
@@ -729,7 +775,7 @@ colnames(count_table)[7:ncol(count_table)] <- sapply(colnames(count_table)[7:nco
 gene_ids <- count_table[, 1]
 
 # Extract the count data, excluding the first column and non-count columns
-count_data <- count_table[, 7:ncol(count_table)] # Adjust indices as necessary
+count_data <- count_table[, 8:ncol(count_table)] 
 
 # Convert to matrix if it's not already one
 count_data_matrix <- as.matrix(count_data)
@@ -763,9 +809,7 @@ dds<- DESeqDataSetFromMatrix(
 dds <- DESeq(dds)
 
 results <- results(dds)
-
-resultsOrdered <- results[order(results$pvalue),]
-
+results <- na.omit(results)
 ```
 MA Plot
 ```{r}
@@ -854,6 +898,44 @@ gene_list <- sapply(gene_list, function(x) {
   }
 }, USE.NAMES = FALSE)
 ```
+Identification of protein-coding genes:
+```{r}
+library(AnnotationHub)
+library(ensembldb)
+library(dplyr)
+
+hub = AnnotationHub()
+edb = hub[["AH75011"]]
+keytypes(edb)
+columns(edb)
+keys = keys(edb, "GENENAME")
+columns =  c("GENEID", "GENEBIOTYPE")
+tbl =
+    ensembldb::select(edb, keys, columns, keytype = "GENENAME") %>%
+    as_tibble()
+
+tbl
+```
+```{r}
+gene_list_df <- data.frame(GENEID = gene_list)
+matched_genes <- merge(gene_list_df, tbl, by = "GENEID")
+biotype_counts <- table(matched_genes$GENEBIOTYPE)
+print(biotype_counts)
+```
+
+```{r}
+biotype_data <- data.frame(
+  GeneBiotype = names(biotype_counts),
+  Count = as.numeric(biotype_counts)
+)
+
+ggplot(biotype_data, aes(x = 1, y = Count, fill = GeneBiotype)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  theme_void() +
+  labs(fill = "Gene Biotype", title = "Distribution of Gene Biotypes")
+
+```
 Biological Processes:
 ```{r}
 ego <- enrichGO(gene         = gene_list,
@@ -866,7 +948,7 @@ ego <- enrichGO(gene         = gene_list,
 
 ego_df <- as.data.frame(ego)
 
-datatable(head(ego_df), options = list(pageLength = 5), 
+datatable(ego_df, options = list(pageLength = 5), 
           caption = 'Top GO Terms from Enrichment Analysis (BP)')
 
 dotplot(ego)
@@ -884,7 +966,7 @@ ego <- enrichGO(gene         = gene_list,
 
 ego_df <- as.data.frame(ego)
 
-datatable(head(ego_df), options = list(pageLength = 5), 
+datatable(ego_df, options = list(pageLength = 5), 
           caption = 'Top GO Terms from Enrichment Analysis (CC)')
 
 dotplot(ego)
@@ -903,23 +985,11 @@ ego <- enrichGO(gene         = gene_list,
 
 ego_df <- as.data.frame(ego)
 
-datatable(head(ego_df), options = list(pageLength = 5), 
+datatable(ego_df, options = list(pageLength = 5), 
           caption = 'Top GO Terms from Enrichment Analysis (MF)')
 
 dotplot(ego)
 ```
-```{r}
-library(biomaRt)
 
-ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
-
-cage_gene_ids <- c("CATG00000000442.1", "CATG00000000487.1", "CATG00000000490.1")
-
-gene_mapping <- getBM(attributes = c('ensembl_gene_id', 'hgnc_symbol'),
-                      filters = 'ensembl_gene_id',
-                      values = cage_gene_ids,
-                      mart = ensembl)
-
-```
 
 
