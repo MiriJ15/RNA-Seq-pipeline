@@ -934,8 +934,16 @@ ggplot(biotype_data, aes(x = 1, y = Count, fill = GeneBiotype)) +
   coord_polar(theta = "y") +
   theme_void() +
   labs(fill = "Gene Biotype", title = "Distribution of Gene Biotypes")
-
 ```
+Extracting only protein-coding genes:
+```{r}
+protein_coding_genes <- subset(matched_genes, GENEBIOTYPE == 'protein_coding')
+
+gene_ids <- protein_coding_genes$GENEID
+
+gene_list <- gene_ids
+```
+
 Biological Processes:
 ```{r}
 ego <- enrichGO(gene         = gene_list,
