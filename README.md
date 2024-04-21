@@ -1,7 +1,7 @@
 # ANGSD - RNAseq Project
 
 ## Overview
-This project explores transcriptomic alterations in neurons with PSEN1 mutations, to understand their role in Alzheimer's disease pathology. Using RNA sequencing data, we analyze changes in extracellular matrix components and non-coding gene expression linked to these mutations.
+This project explores transcriptomic alterations in neurons with PSEN1 mutations, to understand their role in Alzheimer's disease pathology. Using RNA sequencing data, we analyze changes in extracellular matrix components and protein-coding gene expression linked to these mutations.
 
 ## Data Sources
 - **GEO Accession**: Data available under [GSE211993](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE211993).
