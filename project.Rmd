@@ -11,8 +11,49 @@ output:
     toc_depth: 2
     toc_float: true
 ---
+# Introduction
 
-# Details regarding the data
+## Question of interest
+
+Alzheimer's disease, the most common cause of dementia, involves both genetic and environmental factors, with familial Alzheimer's disease (fAD) often linked to mutations in genes like PSEN1 [1]. Studying these mutations is crucial as they not only affect gene expression in the brain but also offer insights into the broader mechanisms of Alzheimer's, enhancing our understanding of both familial and sporadic forms of the disease [1]. PSEN1 mutations are critical because they directly impact the processing of amyloid precursor protein (APP) by the γ-secretase complex, leading to the production of amyloid beta (Aβ) peptides [2]. When these mutations occur, they can enhance or disrupt the normal cleavage of APP, resulting in an increased accumulation of toxic amyloid plaques in the brain, a hallmark of Alzheimer's disease [2]. This aberrant processing is linked to early-onset forms of the disease, underscoring the importance of PSEN1 in Alzheimer's pathogenesis [2]. The L150P mutation in the PSEN1 gene is a specific point mutation, where the normal leucine (L) at position 150 is replaced by proline (P), leading to alterations in the protein's function and contributing to the disease's early onset and progression [3]. My question of interest is, how do specific familial Alzheimer's disease (fAD) mutations in the PSEN1 gene affect the gene expression in glutamatergic forebrain neurons, and how might these changes contribute to the pathogenesis of Alzheimer's disease?
+
+## Hypothesis
+Familial Alzheimer’s disease (fAD) mutations in the PSEN1 gene lead to significant alterations in the gene expression profiles of glutamatergic forebrain neurons, with a particular impact on the expression of genes related to the extracellular matrix. These genetic alterations manifest not only in the upregulation and downregulation of key neuronal genes but also prominently influence the composition and function of the extracellular matrix. Changes in this matrix are hypothesized to disrupt cellular communication and integrity, subsequently influencing several pathways pivotal to the pathogenesis of Alzheimer’s disease. This focus on the extracellular matrix could provide insights into the structural and functional disruptions that contribute to the disease's progression, offering potential targets for therapeutic intervention.
+
+This hypothesis will be tested through comprehensive RNA-seq analysis, comparing gene expression profiles from glutamatergic forebrain neurons derived from individuals with fAD-related PSEN1 mutation (L150P) to those from matched isogenic controls. Subsequent bioinformatics analyses will focus on identifying significantly affected genes and pathways.
+
+# Results
+
+## Key insights
+Comprehensive RNA-seq analysis identified a total of 4,384 significantly altered genes (|log2FoldChange| > 1) in glutamatergic forebrain neurons derived from individuals with a familial Alzheimer's disease (fAD)-related PSEN1 mutation (L150P), compared to matched isogenic controls. Of these, 2,942 were protein-coding genes, with notable genes including PAX3, TTR, TFAP2B, NEUROD6, SLC13A4, SLC22A6, LEFTY2, PRPH, FZD10, BARHL2, MFRP, ITGA11, VIT, SERPINB12, WNT1, and NEUROD4 showing top differential expression.
+
+Gene Ontology (GO) enrichment analysis highlighted significant dysregulation in biological processes and cellular components related to the extracellular matrix (ECM), confirming our hypothesis. Key GO terms such as extracellular matrix organization (GO:0030198, p.adjust = 8.46e-36), collagen-containing extracellular matrix (GO:0062023, p.adjust = 5.74e-66), and extracellular structure organization (GO:0043062, p.adjust = 7.75e-36) were among the most significantly enriched. These categories encompassed genes known for their roles in ECM structure and function.
+
+Among the highlighted genes, ITGA11 stands out for its direct role in connecting cells to the matrix around them, helping to anchor cells in place and allowing them to communicate. The WNT1 and FZD10 genes are part of the Wnt signaling pathway, crucial for the maintenance and repair of this matrix, influencing how cells interact with their surroundings. TTR, while primarily involved in transporting thyroid hormones and vitamin A, also plays a role in removing amyloid-beta proteins that can disrupt the matrix structure in Alzheimer's. Lastly, SERPINB12 helps regulate the breakdown of other proteins, indirectly maintaining the matrix's integrity.
+
+Furthermore, terms related to the external encapsulating structure and connective tissue development showed significant enrichment, implicating these structural components in the disease pathology of Alzheimer's related to the PSEN1 mutation. The results suggest that the PSEN1 (L150P) mutation exerts profound effects on the expression of genes associated with the extracelullar membrane, potentially disrupting cellular communication and integrity, which are critical in Alzheimer's disease pathogenesis.
+
+## Future experiments and analyses
+To address the limitations posed by the homogeneity of the current sample set, future experiments should include a more diverse cohort. This would involve collecting samples from multiple individuals with varying genetic backgrounds, ages, and both genders. Such diversity will enhance the generalizability of the findings and help elucidate the broader implications of PSEN1 mutations across different populations.
+
+To capture cellular heterogeneity within glutamatergic forebrain neurons, single-cell RNA sequencing (scRNA-seq) could be employed. This method would allow for the dissection of the cellular composition of the brain region and the identification of specific cell types that are most susceptible to PSEN1 mutations.
+
+Integrating RNA-seq data with proteomic and metabolomic analyses could provide a more comprehensive view of the molecular alterations due to fAD mutations. This multi-omics approach would help correlate transcriptomic changes with alterations in protein expression and metabolic pathways, offering a holistic view of the disease mechanisms.
+
+Employing computational models to simulate the impact of genetic mutations on neuronal networks could provide insights into how alterations in gene expression affect brain function. Such models could help predict the clinical outcomes of genetic mutations, aiding in the development of targeted therapies.
+
+## Limitations
+Both the control and non-control samples are derived from a single 58-year-old male. This severely limits the genetic and phenotypic diversity represented in the data. The results obtained may not be generalizable across different ages, sexes, or genetic backgrounds, which are critical factors in the study of neurodegenerative diseases like Alzheimer's.
+
+The small sample size (5 fAD samples and 5 controls) restricts the statistical power of the study and may not capture the variability present in the general population. This limitation could affect the reliability of the conclusions drawn from the data.
+
+Given that samples are processed in batches, there is a risk of introducing non-biological variations that can influence the results. Without appropriate controls from diverse backgrounds, it's challenging to distinguish these effects from genuine biological differences.
+
+Focusing solely on specific mutations within the PSEN1 gene limits the scope of the study. The findings might not extend to other variants within the gene or to other genes implicated in Alzheimer's disease.
+
+# Methods 
+A detailed verbose description of all the steps you took to arrive at the conclusion including how and where the data was downloaded, pre-processed and analyzed. This should also include some brief reasoning of why you chose certain tools/solutions and what the results of the QC tell you about the data at hand.
+## Details regarding the data
 -My data is deposited in [GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE211993) as GSE211993
 
 -I have downloaded my raw sequences from [SRA](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=PRJNA873113&o=acc_s%3Aa) (40 FASTQ pair end can be found using ID PRJNA873113)
@@ -31,7 +72,7 @@ output:
 
 -The sequencing was conducted with BGIseq (DNBseq, 2 × 100 nt, stranded paired-end).
 
-# Prerequisite - Conda environment
+## Prerequisite - Conda environment
 Create rna_seq_analysis.yaml to create conda environment with all necessary tools:
 ```{bash, eval=FALSE}
 name: rna_seq_analysis
@@ -60,17 +101,17 @@ This environment contains all you need for the further analysis, just activate i
 conda activate rna_seq_analysis
 ```
 
-# Prerequisite - Interactive shell/slurm
+## Prerequisite - Interactive shell/slurm
 You can either run following scripts in interactive shell on Weill Cornell Cayuga server using:
 ```{bash, eval=FALSE}
 srun -n1 --pty --partition=angsd_class --mem=40G bash -i
 ```
 or you can edit scripts to run them using batch scheduler of your choice.
 
-# Prerequisite - Script location
+## Prerequisite - Script location
 All scripts are located at `/athena/angsd/scratch/mij4011/homework/project`
 
-# Prerequisite - Master Script
+## Prerequisite - Master Script
 Master Script can be used to run all the tasks in a series to avoid unnecessary repetitiveness and improve reproducibility.
 
 master.sh:
@@ -96,7 +137,7 @@ bash cutadapt.sh
 bash silva_database_download.sh
 bash run_bbduk.sh
 
-# Quality control after processing
+# Quality control after processing (optional)
 bash processed_multiqc.sh
 
 # Step 5: Alignment
@@ -104,7 +145,7 @@ bash hg38.sh
 bash index.sh
 bash star.sh
 
-# Quality check for mapping
+# Quality check for mapping (optional)
 bash mapping_quality.sh
 
 # Assess rRNA removal via RSeQC
@@ -116,7 +157,7 @@ bash featurecounts.sh
 echo "Analysis Complete"
 ```
 
-# 1. Writing a script to download fastq files.
+## 1. Writing a script to download fastq files.
 
 download_data.sh:
 ```{bash, eval=FALSE}
@@ -150,7 +191,7 @@ echo "Download completed."
 cd ..
 ```
 
-# 2. Quality control with FastQC and MultiQC
+## 2. Quality control with FastQC and MultiQC
 fastqc.sh:
 ```{bash, eval=FALSE}
 #!/bin/bash
@@ -173,9 +214,7 @@ multiqc "$OUTPUT_DIR" -o multiqc
 <iframe src="multiqc_reports/multiqc_preprocessed.pdf" width="100%" height="600"></iframe>
 
 
-# 3. Trimming data
-
-According to the protocol, the next step in the analysis is trimming the adapters.
+## 3. Trimming data
 
 The sequencing was performed using BGIseq (DNBseq) technology and libraries were constructed following BGI protocols, the adapters you need to trim will likely be specific to BGI's sequencing platforms. I have found out that adapter for forward strand is `AAGTCGGAGGCCAAGCGGTCTTAGGAAGACAA` and for backward is `AAGTCGGATCGTAGCCATGTCGTTCTGTGAGCCAAGGAGTTG`. I am going to test it using the following script.
 adapter_test.sh:
@@ -326,11 +365,10 @@ done
 
 --minimum-length=30: This specifies the minimum length of reads to keep after trimming. Reads that are shorter than 30 bases after trimming will be discarded. This is useful for filtering out very short sequences that may not be useful for further analysis.
 
-# 4. Removal of residual rRNA annotated in SILVA with BBDuk
-The next step according to the protocol from the paper is to get rid of residual rRNA in our samples. This involves:
+## 4. Removal of residual rRNA annotated in SILVA with BBDuk
+Removing residual ribosomal RNA (rRNA) from RNA sequencing samples is crucial because rRNA makes up the majority of cellular RNA, thereby diluting the less abundant but biologically informative messenger RNA (mRNA) and other non-coding RNAs.
 
-Downloading SSU (Small Subunit) and LSU (Large Subunit) Ref NR (Non-Redundant) datasets from silva. 
-
+First , we will need to download SSU (Small Subunit) and LSU (Large Subunit) Ref NR (Non-Redundant) datasets from silva.
 This can be done via silva_database_download.sh:
 ```{bash, eval=FALSE}
 #!/bin/bash
@@ -453,7 +491,7 @@ multiqc "$OUTPUT_DIR" -o processed_multiqc
 ```
 <iframe src="multiqc_reports/multiqc_postprocessed.pdf" width="100%" height="600"></iframe>
 
-# 5. Alignment with star
+## 5. Alignment with star
 First, we should download hg38 assembly (used in the paper).
 
 hg38.sh:
@@ -605,7 +643,9 @@ SRR21190763.Aligned.sortedByCoord.out_rRNA_count.txt	1373	208
 SRR21190764.Aligned.sortedByCoord.out_rRNA_count.txt	1017	260
 SRR21190765.Aligned.sortedByCoord.out_rRNA_count.txt	1251	258
 ```
-# 6. FeatureCounts
+Looks like residual rRNA removal was quite good!
+
+## 6. FeatureCounts
 featurecounts.sh:
 ```{bash, eval=FALSE}
 #!/bin/bash
@@ -641,38 +681,33 @@ featureCounts -a "$ANNOTATION_FILE" \
 echo "featureCounts has completed."
 
 ```
--a "$ANNOTATION_FILE": Specifies the annotation file.
+-a "$ANNOTATION_FILE": Specifies the gene annotation file, which contains information about gene features.
 
--o "$OUTPUT_FILE": Designates the output file that will contain the counts of reads for each feature.
+-o "$OUTPUT_FILE": Designates the output file where the counts of reads aligned to features (genes) will be saved.
 
--F GTF: Indicates the format of the annotation file. In this case, it's specified as GTF.
+-F GTF: Sets the format of the annotation file to GTF (Gene Transfer Format).
 
--t exon: Specifies the type of feature to count reads against. Here, exon means that reads will be counted if they map to exon regions defined in the annotation file.
+-s 2: Indicates that the script should count only reverse-stranded reads (useful for strand-specific RNA-seq data).
 
--g ref_gene: This option sets the attribute in the annotation file that will be used to group features (e.g., exons) into meta-features (e.g., genes) for counting.
+-p: Instructs featureCounts to count fragments instead of individual reads, assuming paired-end RNA-seq data.
 
--O: Allows reads to be assigned to more than one feature if they overlap multiple features. This is important for reads that might map to regions where features overlap (e.g., alternative splicing sites).
+--countReadPairs: Ensures that read pairs are counted only once, even if both reads in a pair are mapped.
 
---minOverlap 90: Sets the minimum number of overlapping bases required for a read to be considered as overlapping with a feature. In this case, a read must overlap a feature by at least 90 bases to be counted.
+-C: Disallows counting of reads that have their two ends mapping to different chromosomes or mapping to the same chromosome but on opposite strands.
 
---fracOverlap 0.9: Specifies the minimum fraction of overlapping bases in a read that must overlap with a feature for the read to be considered. 
+-B: Requires both reads in a pair to be successfully aligned before counting them (for paired-end data).
 
---primary: Only counts primary alignments of reads. This is used to exclude secondary or supplementary alignments, which is important for ensuring that each read is counted only once, especially in the presence of multimapping reads.
+--extraAttributes gene_name: Includes additional gene attributes (in this case, gene_name) in the output file for better readability and interpretation.
 
--p: Indicates that the input data are paired-end reads. This option tells featureCounts to count fragments (pair of reads) instead of individual reads, which is the correct approach for paired-end RNA-seq data.
+--minOverlap 90: Sets the minimum number of bases that must overlap with a feature for a read to be considered for counting (90 bases in this case).
 
--B: Requires both ends of a pair to be successfully aligned for a fragment to be considered. This helps ensure that only high-quality, properly aligned read pairs are counted.
+--fracOverlap 0.9: Specifies that at least 90% of a read must overlap with a feature to be counted.
 
--C: Excludes reads that have their two ends mapping to different chromosomes or mapping to the same chromosome but on opposite strands, to filter out chimeric or improperly paired reads.
+-T 16: Allocates 16 CPU threads to be used for processing, speeding up the counting process.
 
--T 32: Specifies the number of threads to use for processing.
-
-"$BAM_DIR"/*.bam: Specifies the input BAM files containing the aligned reads.
-
-# 7. Gene count summary
-Important information:I will be looking only at L150P, I will get rid of A79V samples and leave only 10 L150P samples, 5 control and 5 with familial AD. At one point I have realized that 10 samples are low-quality
-
-Summary plot is interactive and can be zoomed in/out
+## 7. Gene count summary
+Important information:I will be looking only at L150P, I will get rid of A79V samples and leave only 10 L150P samples, 5 control and 5 with familial AD.
+First lets load all necessary libraries:
 ```{r}
 # Load necessary libraries
 library(dplyr)
@@ -682,7 +717,18 @@ library(plotly)
 library(stringr)
 library(DESeq2)
 library(ggrepel)
-
+library(rtracklayer)
+library(pheatmap)
+library(clusterProfiler)
+library(AnnotationDbi)
+library(ensembldb)  # Loaded only once
+library(EnsDb.Hsapiens.v86)
+library(org.Hs.eg.db)
+library(DT)
+library(AnnotationHub)
+```
+Summary plot is interactive and can be zoomed in/out
+```{r}
 # Read the gene count summary and metadata files
 gene_count_summary <- read.table("count_table.txt.summary", header = TRUE, stringsAsFactors = FALSE)
 metadata <- read.csv("metadata.txt", stringsAsFactors = FALSE)
@@ -739,6 +785,11 @@ filtered_gene_count_long <- gene_count_long %>%
   dplyr::slice(-c(21:24)) %>%
   dplyr::slice(-c(25:40))
 
+filtered_gene_count_long <- filtered_gene_count_long %>%
+  mutate(
+    Sample = str_replace(Sample, "(\\d+)$", function(x) as.character(as.numeric(x) - 1)),
+  )
+
 # Plotting
 p <- ggplot(filtered_gene_count_long, aes(y = Sample, x = Count, fill = Status)) +
   geom_bar(stat = "identity", position = "dodge", orientation = "y") +
@@ -746,12 +797,15 @@ p <- ggplot(filtered_gene_count_long, aes(y = Sample, x = Count, fill = Status))
   labs(title = "Counts for Each Replicate and Status", y = "Replicate", x = "Count") +
   scale_fill_brewer(palette = "Set3") # Adjust palette as needed
 
+ggsave(filename = "key_data_sets/counts_for_each_replicate.png", plot = p, width = 10, height = 8, dpi = 300)
+
 # Convert ggplot object to an interactive plotly object
 ggplotly(p)
 ```
-The majority of counts for each replicate fall under the 'Assigned' category, indicating successful mapping to known genomic features, while the other categories represent various types of reads that could not be uniquely or properly assigned. This distribution suggests a consistent pattern of read assignment across the replicates, with a relatively small fraction of reads being unassigned or ambiguously mapped.
+Figure 1. The majority of counts for each replicate fall under the 'Assigned' category, indicating successful mapping to known genomic features, while the other categories represent various types of reads that could not be uniquely or properly assigned. This distribution suggests a consistent pattern of read assignment across the replicates, with a relatively small fraction of reads being unassigned or ambiguously mapped.
 
-# Now lets process the count table
+## 8. Now lets process the count table and plot essential graphs
+
 ```{r}
 # Read the gene count summary and metadata files
 count_table <- read.table("count_table.txt", header = TRUE, stringsAsFactors = FALSE)
@@ -815,12 +869,11 @@ MA Plot
 ```{r}
 plotMA(results, main="MA-plot", ylim=c(-10,10))
 ```
-The blue points represent genes that are significantly differentially expressed, with their dispersion reflecting the strength and direction of differential expression. The majority of genes do not exhibit significant changes in expression (grey points), indicating stable expression across the conditions compared. The clustering of blue points away from the zero log fold change line, especially for genes with higher mean expression levels, suggests a set of genes with notable expression differences that may be biologically significant in the context of the L150P variant.
+Figure 2. The blue points represent genes that are significantly differentially expressed, with their dispersion reflecting the strength and direction of differential expression. The majority of genes do not exhibit significant changes in expression (grey points), indicating stable expression across the conditions compared. The clustering of blue points away from the zero log fold change line, especially for genes with higher mean expression levels, suggests a set of genes with notable expression differences that may be biologically significant in the context of the L150P variant.
 
 PCA plot:
 ```{r}
 rld <- rlogTransformation(dds)
-plotPCA(rld, intgroup="condition")
 
 pcaData <- plotPCA(rld, intgroup="condition", returnData=TRUE)
 pcaData$sample <- rownames(pcaData)
@@ -836,7 +889,7 @@ ggplot(pcaData, aes(x=PC1, y=PC2, label=sample)) +
 
 ```
 
-The PCA plot illustrates the separation between the control group and the L150P variant samples, with principal component 1 (PC1) accounting for 98% of the variance. The distinct clustering of the L150P samples away from the control on PC1 suggests a significant impact of the L150P mutation on the overall gene expression profile. The variance captured by PC2 is relatively small, indicating that most of the expression variation is explained by PC1. This separation supports the potential of the L150P mutation to drive distinct transcriptional changes.
+Figure 3. The PCA plot illustrates the separation between the control group and the L150P variant samples, with principal component 1 (PC1) accounting for 98% of the variance. The distinct clustering of the L150P samples away from the control on PC1 suggests a significant impact of the L150P mutation on the overall gene expression profile. The variance captured by PC2 is relatively small, indicating that most of the expression variation is explained by PC1. This separation supports the potential of the L150P mutation to drive distinct transcriptional changes.
 
 Number of Differentially expressed genes:
 ```{r}
@@ -847,13 +900,64 @@ significant_genes <- res[which(res$padj <0.05), ]
 significant_fold_change_genes<- significant_genes[which(abs(significant_genes$log2FoldChange)>1),]
 ```
 
-Summary of the results:
+Summary of the results (!!!gtf file weights around 1GB which is why I was not able to upload it on GitHub, you can download it from [HERE](https://ftp.ncbi.nlm.nih.gov/geo/series/GSE211nnn/GSE211993/suppl/GSE211993%5Fgencode%5Ffantomcat.v1.02.genes%5Ftranscripts%5Fexons.gtf.gz), unzip and change file/variable name!!!):
 ```{r}
-cat("Number of significant genes: ", nrow(significant_genes), "\n")
-cat("Number of significant genes with |log2FoldChange| > 1: ", nrow(significant_fold_change_genes), "\n")
+gtf_path <- "genome_annotation.gtf"
+gtf_data <- import(gtf_path, format = "gtf")
 
-# Viewing the top significant genes
-head(significant_fold_change_genes)
+# Create a mapping table of CATG IDs to ref_gene values
+gene_mapping <- gtf_data %>%
+  as.data.frame() %>%
+  dplyr::filter(!is.na(gene_id) & !is.na(ref_gene)) %>%
+  dplyr::select(gene_id, ref_gene) %>%
+  distinct()
+
+# Convert DESeqResults to DataFrame
+res_df <- as.data.frame(res)
+
+# Add the gene IDs as a new column 
+res_df$gene_id <- rownames(res_df)
+
+# Merge with gene_mapping to get the ref_gene values for CATG IDs
+mapped_res_df <- merge(res_df, gene_mapping, by.x = "gene_id", by.y = "gene_id", all.x = TRUE)
+
+# If there is no matching ref_gene, keep the original CATG ID
+mapped_res_df$final_gene_id <- ifelse(is.na(mapped_res_df$ref_gene), mapped_res_df$gene_id, mapped_res_df$ref_gene)
+
+# Filter for significant genes and significant fold changes
+significant_genes <- mapped_res_df[which(mapped_res_df$padj < 0.05), ]
+significant_fold_change_genes <- significant_genes[which(abs(significant_genes$log2FoldChange) > 1), ]
+
+# Convert to a data frame
+significant_fold_change_genes_df <- as.data.frame(significant_fold_change_genes)
+
+# Reverse the data frame to prioritize later rows when removing duplicates
+significant_fold_change_genes_df <- significant_fold_change_genes_df[rev(seq_len(nrow(significant_fold_change_genes_df))),]
+
+# Remove duplicate gene_ids while keeping the last occurrence (now the first because we reversed the dataset)
+significant_fold_change_genes_df <- significant_fold_change_genes_df[!duplicated(significant_fold_change_genes_df$gene_id),]
+
+# Re-reverse the data frame to restore original order
+significant_fold_change_genes_df <- significant_fold_change_genes_df[rev(seq_len(nrow(significant_fold_change_genes_df))),]
+
+# Update gene_id conditionally
+significant_fold_change_genes_df <- significant_fold_change_genes_df %>%
+  mutate(gene_id = if_else(grepl("^CATG", gene_id), final_gene_id, gene_id))
+
+# Filter out rows where gene_id contains "-", and then select only the required columns
+significant_fold_change_genes_df <- significant_fold_change_genes_df %>%
+  dplyr::filter(!grepl("-", gene_id)) %>%
+  dplyr::select(-ref_gene, -final_gene_id)
+
+# Sort the DataFrame by absolute log2FoldChange in descending order
+top_differentially_expressed_genes <- significant_fold_change_genes_df %>%
+  arrange(desc(abs(log2FoldChange)))
+
+cat("\nNumber of significant genes with |log2FoldChange| > 1: ", nrow(significant_fold_change_genes_df), "\n")
+
+write.csv(significant_fold_change_genes_df, 
+          file = "key_data_sets/significant_fold_change_genes.csv", 
+          row.names = FALSE)
 ```
 
 Volcano plot:
@@ -864,11 +968,12 @@ points(significant_fold_change_genes$log2FoldChange, -log10(significant_fold_cha
        col="red", pch=20)
 
 ```
-The density of points in the significant regions suggests a substantial number of genes are differentially expressed.
+Figure 4. The density of points in the significant regions suggests a substantial number of genes are differentially expressed.
 
 Heatmap:
 ```{r}
-library(pheatmap)
+significant_genes <- res[which(res$padj <0.05), ]
+significant_fold_change_genes<- significant_genes[which(abs(significant_genes$log2FoldChange)>1),]
 
 selected_genes <- rownames(significant_fold_change_genes)
 rlog_counts <- assay(rlogTransformation(dds))
@@ -876,19 +981,14 @@ pheatmap(rlog_counts[selected_genes, ], cluster_rows=TRUE, show_rownames=FALSE,
          cluster_cols=TRUE, annotation_col=as.data.frame(colData))
 
 ```
-GO Enrichment analysis:
+Figure 5. This figure illustrates the expression patterns of a set of genes across various samples under two different conditions: Control and L150P. The color intensity within the heatmap represents the expression level of genes, with blue indicating lower expression, yellow representing medium expression, and red signifying higher expression levels. The hierarchical clustering on the left groups genes with similar expression profiles, while the clustering on top organizes samples into clusters based on their overall expression similarities. The annotated bar above the heatmap categorizes the samples by condition, providing a clear visual distinction between the Control (light blue) and L150P (pink) groups. The dendrograms' branch lengths depict the degree of similarity, with shorter branches indicating closer relationships.
+
+## GO Enrichment analysis
 
 Preparation for actual analysis:
 ```{r}
-library(clusterProfiler)
-library(AnnotationDbi)
-library(ensembldb)
-library(EnsDb.Hsapiens.v86)  
-library(org.Hs.eg.db)
-library(DT)
+gene_list <- significant_fold_change_genes_df$gene_id
 
-
-gene_list <- rownames(significant_fold_change_genes)
 
 gene_list <- sapply(gene_list, function(x) {
   if(grepl("^ENSG", x)) {  # Check if the gene ID starts with "ENSG"
@@ -900,26 +1000,23 @@ gene_list <- sapply(gene_list, function(x) {
 ```
 Identification of protein-coding genes:
 ```{r}
-library(AnnotationHub)
-library(ensembldb)
-library(dplyr)
-
 hub = AnnotationHub()
 edb = hub[["AH75011"]]
-keytypes(edb)
-columns(edb)
 keys = keys(edb, "GENENAME")
 columns =  c("GENEID", "GENEBIOTYPE")
 tbl =
     ensembldb::select(edb, keys, columns, keytype = "GENENAME") %>%
     as_tibble()
-
-tbl
 ```
+Illustrating categories of significant logFC genes:
 ```{r}
 gene_list_df <- data.frame(GENEID = gene_list)
 matched_genes <- merge(gene_list_df, tbl, by = "GENEID")
 biotype_counts <- table(matched_genes$GENEBIOTYPE)
+
+write.table(biotype_counts, file = "key_data_sets/biotype_counts.txt", quote = FALSE, sep = "\t", col.names = NA)
+
+
 print(biotype_counts)
 ```
 
@@ -935,14 +1032,46 @@ ggplot(biotype_data, aes(x = 1, y = Count, fill = GeneBiotype)) +
   theme_void() +
   labs(fill = "Gene Biotype", title = "Distribution of Gene Biotypes")
 ```
-Extracting only protein-coding genes:
+Figure 6. This pie chart presents the distribution of gene biotypes in a given dataset. The majority of the genes fall into two primary categories, with the largest segment in green representing 'protein_coding' genes, which are responsible for creating proteins that carry out various functions in the cell. The second largest category, in red, signifies 'lncRNA' genes, which are long non-coding RNAs involved in the regulation of gene expression and chromatin dynamics. The remaining slivers of the pie chart indicate other biotypes, including 'miRNA' (microRNAs), 'processed_pseudogene', 'pseudogene', 'snRNA' (small nuclear RNAs), 'TEC' (to be experimentally confirmed), 'TR_C_gene' (T-cell receptor constant genes), 'TR_V_gene' (T-cell receptor variable genes), 'transcribed_processed_pseudogene', and 'transcribed_unitary_pseudogene', each contributing to a smaller proportion of the total gene distribution.
+
+Extracting only protein-coding genes and illustrating new top differentially expressed genes table with gene-names:
 ```{r}
 protein_coding_genes <- subset(matched_genes, GENEBIOTYPE == 'protein_coding')
 
-gene_ids <- protein_coding_genes$GENEID
+gene_list<- protein_coding_genes$GENEID
 
-gene_list <- gene_ids
+# Assuming 'top_differentially_expressed_genes' is sorted and has the top entries
+top_differentially_expressed_genes <- significant_fold_change_genes_df %>%
+  arrange(desc(abs(log2FoldChange))) %>%
+  slice_head(n = 20)  %>%
+  mutate(gene_id = sub("\\..*", "", gene_id))
+
+# Perform a left join with protein_coding_genes to add the GENENAME
+top_differentially_expressed_genes <- top_differentially_expressed_genes %>%
+  left_join(protein_coding_genes, by = c("gene_id" = "GENEID")) %>%
+  mutate(GENENAME = ifelse(is.na(GENENAME), "NA", GENENAME))
+
+# Select and rearrange columns
+columns_to_remove <- c("GENEBIOTYPE")
+if ("GENEBIOTYPE" %in% names(top_differentially_expressed_genes)) {
+  top_differentially_expressed_genes <- dplyr::select(top_differentially_expressed_genes, -all_of(columns_to_remove))
+}
+
+# Place 'GENENAME' before 'baseMean'
+top_differentially_expressed_genes <- top_differentially_expressed_genes %>%
+  relocate(GENENAME, .after = gene_id)
+
+top_differentially_expressed_genes <- top_differentially_expressed_genes %>%
+  dplyr::filter(GENENAME != "NA")
+
+write.csv(top_differentially_expressed_genes, 
+          file = "key_data_sets/top_differentially_expressed_genes.csv", 
+          row.names = FALSE)
+
+# Print the updated dataframe
+print(top_differentially_expressed_genes)
 ```
+Figure 7. This figure illustates top differentially expressed protein-coding genes alongside with gene names and other valuable statistics. 
 
 Biological Processes:
 ```{r}
@@ -959,8 +1088,13 @@ ego_df <- as.data.frame(ego)
 datatable(ego_df, options = list(pageLength = 5), 
           caption = 'Top GO Terms from Enrichment Analysis (BP)')
 
+write.csv(ego_df, 
+          file = "key_data_sets/enriched_BP_GO_terms.csv", 
+          row.names = FALSE)
+
 dotplot(ego)
 ```
+Figure 8. The given chart  illustrates that processes related to the extracellular matrix and organ development, such as "extracellular structure organization", "external encapsulating structure organization" and "extracellular matrix organization" are notably enriched. 
 
 Cellular component:
 ```{r}
@@ -977,9 +1111,13 @@ ego_df <- as.data.frame(ego)
 datatable(ego_df, options = list(pageLength = 5), 
           caption = 'Top GO Terms from Enrichment Analysis (CC)')
 
+write.csv(ego_df, 
+          file = "key_data_sets/enriched_CC_GO_terms.csv", 
+          row.names = FALSE)
+
 dotplot(ego)
 ```
-
+Figure 9. The plot graphically summarizes gene enrichment in cellular components, with a notable focus on structural elements such as the `collagen-containing extracellular matrix`, `basement membrane` and`endoplasmic reticulum lumen`	.
 
 Molecular function:
 ```{r}
@@ -996,8 +1134,39 @@ ego_df <- as.data.frame(ego)
 datatable(ego_df, options = list(pageLength = 5), 
           caption = 'Top GO Terms from Enrichment Analysis (MF)')
 
+write.csv(ego_df, 
+          file = "key_data_sets/enriched_MF_GO_terms.csv", 
+          row.names = FALSE)
+
 dotplot(ego)
 ```
+Figure 10. The plot visualizes molecular function enrichment, showing a range of activities from ion channel activity to various binding interactions. The chart suggests that the analyzed genes have significant roles in ion channel functions, such as "monoatomic ion channel activity" and "gated channel activity," as well as binding to components of the extracellular matrix like glycosaminoglycan and heparin. 
+
+# Discussion
+
+I believe some of my script or code chunks could be rewritten in a simpler and faster manner. Sometimes, I overthink, and a small, easy problem turns into 50 lines of code. However, I think this is acceptable since quality is more important than speed.
+
+The biggest challenge in this project was working with the custom annotation file provided by the original paper's authors, which combines GENCODE and FANTOM-CAT annotations. Overall, it follows the standard GFF2 protocol, but not all gene IDs are formatted consistently. Most of them are Ensembl identifiers, but approximately 15-20% are CAGE identifiers (starting with CATG). CAGE identifiers are not widely used, resulting in a lack of tools or libraries in R for mapping CAGE to Ensembl identifiers. I had to import the annotation file and write code that would extract reference gene IDs and map CAGE ones to Ensembl in order to analyze my dataset properly.
+
+Another issue was identifying protein-coding genes, separating them from non-coding ones, and adding gene names to my dataframe (see chunks 33-35). This step was crucial for the correct interpretation and analysis of the data, as it allowed for more accurate downstream analyses, such as differential gene expression and enrichment analysis. Correctly identifying and annotating these genes ensured the biological relevance of the findings and enhanced the credibility of the study.
+
+# Key Data Sets
+
+| File                                     | Location        | Description                                                       |
+|------------------------------------------|-----------------|-------------------------------------------------------------------|
+| counts_for_each_replicate.png            | key_data_sets   | Image showing the count for each replicate, categorized by status.|
+| biotype_counts.txt                       | key_data_sets   | Text file listing the number of each gene biotype in the significant genes dataset (fold change > |1|.|
+| top_differentially_expressed_genes.csv   | key_data_sets   | CSV file documenting the most prevalent protein-coding gene IDs along with their respective gene names. |
+| significant_fold_change_genes.csv        | key_data_sets   | CSV file documenting ALL significant genes with a fold change greater than |1|. |
+| enriched_BP_GO_terms.csv                 | key_data_sets   | CSV file containing all Biological Process Gene Ontology (GO) terms identified in the protein-coding dataset. |
+| enriched_CC_GO_terms.csv                 | key_data_sets   | CSV file containing all Cellular Component Gene Ontology (GO) terms identified in the protein-coding dataset. |
+| enriched_MF_GO_terms.csv                 | key_data_sets   | CSV file containing all Molecular Function Gene Ontology (GO) terms identified in the protein-coding dataset. |
 
 
+# Citations
 
+[1] Corsi, G. I., Gadekar, V. P., Haukedal, H., Doncheva, N. T., Anthon, C., Ambardar, S., Palakodeti, D., Hyttel, P., Freude, K., Seemann, S. E., & Gorodkin, J. (2023, March). The transcriptomic landscape of neurons carrying PSEN1 mutations reveals changes in extracellular matrix components and non-coding gene expression. Neurobiology of Disease, 178, 105980. https://doi.org/10.1016/j.nbd.2022.105980
+
+[2] Bagaria, J., Bagyinszky, E., & An, S. S. A. (2022, September 19). Genetics, Functions, and Clinical Impact of Presenilin-1 (PSEN1) Gene. International Journal of Molecular Sciences, 23(18), 10970. https://doi.org/10.3390/ijms231810970
+
+[3] Poon, A., Schmid, B., Pires, C., Nielsen, T. T., Hjermind, L. E., Nielsen, J. E., Holst, B., Hyttel, P., & Freude, K. K. (2016, November). Generation of a gene-corrected isogenic control hiPSC line derived from a familial Alzheimer’s disease patient carrying a L150P mutation in presenilin 1. Stem Cell Research, 17(3), 466–469. https://doi.org/10.1016/j.scr.2016.09.018
