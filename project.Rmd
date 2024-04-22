@@ -802,6 +802,7 @@ ggsave(filename = "key_data_sets/counts_for_each_replicate.png", plot = p, width
 # Convert ggplot object to an interactive plotly object
 ggplotly(p)
 ```
+
 Figure 1. The majority of counts for each replicate fall under the 'Assigned' category, indicating successful mapping to known genomic features, while the other categories represent various types of reads that could not be uniquely or properly assigned. This distribution suggests a consistent pattern of read assignment across the replicates, with a relatively small fraction of reads being unassigned or ambiguously mapped.
 
 ## 8. Now lets process the count table and plot essential graphs
@@ -869,6 +870,7 @@ MA Plot
 ```{r}
 plotMA(results, main="MA-plot", ylim=c(-10,10))
 ```
+
 Figure 2. The blue points represent genes that are significantly differentially expressed, with their dispersion reflecting the strength and direction of differential expression. The majority of genes do not exhibit significant changes in expression (grey points), indicating stable expression across the conditions compared. The clustering of blue points away from the zero log fold change line, especially for genes with higher mean expression levels, suggests a set of genes with notable expression differences that may be biologically significant in the context of the L150P variant.
 
 PCA plot:
@@ -968,6 +970,7 @@ points(significant_fold_change_genes$log2FoldChange, -log10(significant_fold_cha
        col="red", pch=20)
 
 ```
+
 Figure 4. The density of points in the significant regions suggests a substantial number of genes are differentially expressed.
 
 Heatmap:
@@ -981,6 +984,7 @@ pheatmap(rlog_counts[selected_genes, ], cluster_rows=TRUE, show_rownames=FALSE,
          cluster_cols=TRUE, annotation_col=as.data.frame(colData))
 
 ```
+
 Figure 5. This figure illustrates the expression patterns of a set of genes across various samples under two different conditions: Control and L150P. The color intensity within the heatmap represents the expression level of genes, with blue indicating lower expression, yellow representing medium expression, and red signifying higher expression levels. The hierarchical clustering on the left groups genes with similar expression profiles, while the clustering on top organizes samples into clusters based on their overall expression similarities. The annotated bar above the heatmap categorizes the samples by condition, providing a clear visual distinction between the Control (light blue) and L150P (pink) groups. The dendrograms' branch lengths depict the degree of similarity, with shorter branches indicating closer relationships.
 
 ## GO Enrichment analysis
@@ -1032,6 +1036,7 @@ ggplot(biotype_data, aes(x = 1, y = Count, fill = GeneBiotype)) +
   theme_void() +
   labs(fill = "Gene Biotype", title = "Distribution of Gene Biotypes")
 ```
+
 Figure 6. This pie chart presents the distribution of gene biotypes in a given dataset. The majority of the genes fall into two primary categories, with the largest segment in green representing 'protein_coding' genes, which are responsible for creating proteins that carry out various functions in the cell. The second largest category, in red, signifies 'lncRNA' genes, which are long non-coding RNAs involved in the regulation of gene expression and chromatin dynamics. The remaining slivers of the pie chart indicate other biotypes, including 'miRNA' (microRNAs), 'processed_pseudogene', 'pseudogene', 'snRNA' (small nuclear RNAs), 'TEC' (to be experimentally confirmed), 'TR_C_gene' (T-cell receptor constant genes), 'TR_V_gene' (T-cell receptor variable genes), 'transcribed_processed_pseudogene', and 'transcribed_unitary_pseudogene', each contributing to a smaller proportion of the total gene distribution.
 
 Extracting only protein-coding genes and illustrating new top differentially expressed genes table with gene-names:
@@ -1071,6 +1076,7 @@ write.csv(top_differentially_expressed_genes,
 # Print the updated dataframe
 print(top_differentially_expressed_genes)
 ```
+
 Figure 7. This figure illustates top differentially expressed protein-coding genes alongside with gene names and other valuable statistics. 
 
 Biological Processes:
@@ -1094,6 +1100,7 @@ write.csv(ego_df,
 
 dotplot(ego)
 ```
+
 Figure 8. The given chart  illustrates that processes related to the extracellular matrix and organ development, such as "extracellular structure organization", "external encapsulating structure organization" and "extracellular matrix organization" are notably enriched. 
 
 Cellular component:
@@ -1117,6 +1124,7 @@ write.csv(ego_df,
 
 dotplot(ego)
 ```
+
 Figure 9. The plot graphically summarizes gene enrichment in cellular components, with a notable focus on structural elements such as the `collagen-containing extracellular matrix`, `basement membrane` and`endoplasmic reticulum lumen`	.
 
 Molecular function:
@@ -1140,6 +1148,7 @@ write.csv(ego_df,
 
 dotplot(ego)
 ```
+
 Figure 10. The plot visualizes molecular function enrichment, showing a range of activities from ion channel activity to various binding interactions. The chart suggests that the analyzed genes have significant roles in ion channel functions, such as "monoatomic ion channel activity" and "gated channel activity," as well as binding to components of the extracellular matrix like glycosaminoglycan and heparin. 
 
 # Discussion
@@ -1155,9 +1164,9 @@ Another issue was identifying protein-coding genes, separating them from non-cod
 | File                                     | Location        | Description                                                       |
 |------------------------------------------|-----------------|-------------------------------------------------------------------|
 | counts_for_each_replicate.png            | key_data_sets   | Image showing the count for each replicate, categorized by status.|
-| biotype_counts.txt                       | key_data_sets   | Text file listing the number of each gene biotype in the significant genes dataset (fold change > |1|.|
+| biotype_counts.txt                       | key_data_sets   | Text file listing the number of each gene biotype in the significant genes dataset (fold change > abs 1).|
 | top_differentially_expressed_genes.csv   | key_data_sets   | CSV file documenting the most prevalent protein-coding gene IDs along with their respective gene names. |
-| significant_fold_change_genes.csv        | key_data_sets   | CSV file documenting ALL significant genes with a fold change greater than |1|. |
+| significant_fold_change_genes.csv        | key_data_sets   | CSV file documenting ALL significant genes with a fold change greater than abs 1). |
 | enriched_BP_GO_terms.csv                 | key_data_sets   | CSV file containing all Biological Process Gene Ontology (GO) terms identified in the protein-coding dataset. |
 | enriched_CC_GO_terms.csv                 | key_data_sets   | CSV file containing all Cellular Component Gene Ontology (GO) terms identified in the protein-coding dataset. |
 | enriched_MF_GO_terms.csv                 | key_data_sets   | CSV file containing all Molecular Function Gene Ontology (GO) terms identified in the protein-coding dataset. |
