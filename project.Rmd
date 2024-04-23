@@ -1075,6 +1075,8 @@ write.csv(top_differentially_expressed_genes,
 
 # Print the updated dataframe
 print(top_differentially_expressed_genes)
+
+print.data.frame(top_differentially_expressed_genes, max = NULL)
 ```
 
 Figure 7. This figure illustates top differentially expressed protein-coding genes alongside with gene names and other valuable statistics. 
